@@ -4,14 +4,35 @@
     stroke-linecap: cap;
 }
 
-.node rect {
+.node > rect {
     fill:green;
     rx: 5;
 }
 
-.node text {
+.node > rect:hover {
+    fill: blue;
+}
+
+.node > text {
     fill: white;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     font-size: 14px;
     user-select: none;
+}
+
+
+.node.ood > rect {
+    fill: lightgray;
+}
+
+.node.ok > rect {
+    fill: green;
+}
+
+.node.err > rect {
+    fill: red;
+}
+
+.node.fup > rect {
+    fill: orange;
 }

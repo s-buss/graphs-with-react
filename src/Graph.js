@@ -34,17 +34,17 @@ class Node extends React.PureComponent {
 
   render() {
     var props = this.props;
+    var node = props.node;
 
     return (
-      <g className="node" onMouseDown={this._handleMouseDown} onDragStart={this._handleDragStart}>
-        <rect x={props.x - props.width / 2} y={props.y - props.height / 2} width={props.width} height={props.height}/>
-        <text ref={e => this._text = e} x={props.x} y={props.y} alignmentBaseline="middle" textAnchor="middle">{props.node.name}</text>
+      <g className={`node ${node.color}`} transform={`translate(${node.x} ${node.y})`} onMouseDown={this._handleMouseDown} onDragStart={this._handleDragStart}>
+        <rect x={- node.width / 2} y={- node.height / 2} width={node.width} height={node.height}/>
+        <text ref={e => this._text = e} x={0} y={0} alignmentBaseline="middle" textAnchor="middle">{node.name}</text>
       </g>
     );
   }
 
   componentDidMount() {
-    //console.log(this._text.getBBox());
     this.props.node.width = this._text.getBBox().width + 20;
   }
 
@@ -60,7 +60,6 @@ class Node extends React.PureComponent {
   }
 }
 
-
 // Draws an edge between two rectangular nodes that does not
 // overlap the node ranges.
 class Edge extends React.PureComponent {
@@ -74,19 +73,23 @@ class Edge extends React.PureComponent {
 
     var adx = Math.abs(dx);
     var ady = Math.abs(dy);
-    
+
+    // Find the starting point (Intersection of the line with the source node rectangle)
     var tx = adx > 0.1 ? (src.width / 2) / adx : 1.0;
     var ty = ady > 0.1 ? (src.height / 2) / ady : 1.0;
     var t0 = Math.min(tx, ty);
 
+    var x0 = src.x + t0 * dx;
+    var y0 = src.y + t0 * dy;
+
+    // Find the end point (Intersection of the line with the target node rectangle)
     tx = adx > 0.1 ? (trg.width / 2) / adx : 1.0;
     ty = ady > 0.1 ? (trg.height / 2) / ady : 1.0;
     var t1 = 1 - Math.min(tx, ty);
 
+    // Make the line a little bit shorter at the target end.
     t1 -= 2 / Math.sqrt(dx * dx + dy * dy);
 
-    var x0 = src.x + t0 * dx;
-    var y0 = src.y + t0 * dy;
     var x1 = src.x + t1 * dx;
     var y1 = src.y + t1 * dy;
 
@@ -125,6 +128,32 @@ class Graph extends React.PureComponent {
 
     // Note that starting the layout process in the constructor is not possible.
     // We do that in componentWillMount.
+
+    // This is an example how nodes can be removed from or added to the graph
+    window.setTimeout(function () {
+      var graph = this.props.graph;
+
+      // Modify the node and edge lists
+      graph.nodes.splice(1, 1);
+      graph.edges.splice(0, 2);
+
+      // Start the layout process again
+      this._cola.start();
+    }.bind(this), 3000);
+
+    window.setTimeout(function () {
+      var graph = this.props.graph;
+
+      // Modify the node and edge list
+      var newNode = { id: 5, name: "A new node", width: 100, height: 30 };
+      graph.nodes.push(newNode);
+      graph.edges.push({ source: graph.nodes[1], target: newNode });
+
+      // Start the layout process again
+      this._cola.start();
+    }.bind(this), 6000);
+
+
   }
 
   componentWillMount()
@@ -189,7 +218,7 @@ class Graph extends React.PureComponent {
       return null;
     }
 
-    var nodes = this._cola.nodes().map( n => <Node key={n.index} node={n} x={n.x} y={n.y} width={n.width} height={n.height} onMouseDown={this._handleMouseDown}/>);
+    var nodes = this._cola.nodes().map( n => <Node key={n.id} node={n} x={n.x} y={n.y} width={n.width} height={n.height} onMouseDown={this._handleMouseDown}/>);
     var edges = this._cola.links().map( e => {
 
       var help = e.source.x + "," + e.source.y + "-" + e.target.x + "," + e.target.y;

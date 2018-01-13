@@ -6,10 +6,10 @@ import Graph from './Graph.js';
 
 var graph = {
   nodes: [
-    { name: "Abcdefg" },
-    { name: "B" },
-    { name: "C" },
-    { name: "D" }
+    { id: 1, name: "Abcdefg", color: "ood" },
+    { id: 2, name: "B", color: "ok" },
+    { id: 3, name: "C", color: "fup" },
+    { id: 4, name: "D", color: "err" }
   ],
   edges: [
     { source: 0, target: 1 },
