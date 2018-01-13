@@ -6,7 +6,7 @@ import Graph from './Graph.js';
 
 var graph = {
   nodes: [
-    { name: "A" },
+    { name: "Abcdefg" },
     { name: "B" },
     { name: "C" },
     { name: "D" }

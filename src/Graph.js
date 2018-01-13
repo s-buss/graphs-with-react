@@ -38,9 +38,14 @@ class Node extends React.PureComponent {
     return (
       <g className="node" onMouseDown={this._handleMouseDown} onDragStart={this._handleDragStart}>
         <rect x={props.x - props.width / 2} y={props.y - props.height / 2} width={props.width} height={props.height}/>
-        <text x={props.x} y={props.y} alignmentBaseline="middle" textAnchor="middle">{props.node.name}</text>
+        <text ref={e => this._text = e} x={props.x} y={props.y} alignmentBaseline="middle" textAnchor="middle">{props.node.name}</text>
       </g>
     );
+  }
+
+  componentDidMount() {
+    //console.log(this._text.getBBox());
+    this.props.node.width = this._text.getBBox().width + 20;
   }
 
   _handleDragStart() {
