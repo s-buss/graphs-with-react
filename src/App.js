@@ -5,6 +5,27 @@ import './Graph.css';
 
 import * as WebCola from 'webcola';
 
+// Override the Layout so that the ticks are controlled by the render loop.
+// The kick() method contains no loop any longer. Instead nextFrame() has to be called
+// to continue with the animation.
+class Layout extends WebCola.Layout {
+
+  constructor()
+  {
+    super();
+
+    this.nextFrame = this.nextFrame.bind(this);
+  }
+
+  kick() {
+    this.tick();
+  }
+
+  nextFrame() {
+    window.requestAnimationFrame(this.tick.bind(this));
+  }
+}
+
 class Node extends React.PureComponent {
 
   constructor(props) {
@@ -101,7 +122,7 @@ class Graph extends React.PureComponent {
 
     this.state = { started: false, tick: 0 };
 
-    this._cola = new WebCola.Layout();
+    this._cola = new Layout();
     this._cola
       .size([ 800, 600 ])
       .nodes(graph.nodes)
@@ -114,13 +135,13 @@ class Graph extends React.PureComponent {
       .on("start", this._handleStart)
       .on("end", this._handleEnd);
 
-    window.setTimeout(this.start.bind(this), 0);
-    //this.start();
+    // Note that starting the layout process in the constructor is not possible.
+    // We do that in componentWillMount.
   }
 
-  start() {
-    console.log("GO");
-    this._cola.start(30);
+  componentWillMount()
+  {
+    this._cola.start(10, 10, 10);
   }
 
   _handleStart() {
@@ -128,7 +149,8 @@ class Graph extends React.PureComponent {
   }
 
   _handleTick() {
-    this.setState((s, p) => { return { tick: s.tick + 1 }; });
+    // Make the graph render itself and call the nextFrame method after updating the component.
+    this.setState((s, p) => { return { tick: s.tick + 1 }; }, this._cola.nextFrame);
   }
 
   _handleEnd() {
@@ -189,7 +211,8 @@ class Graph extends React.PureComponent {
     });
 
     return (
-      <svg width="800" height="600">
+      <svg width="800" height="600" style={{ userSelect: "none" }}>
+        <text x={0} y={600}>{this.state.tick}</text>
         <g>
           {nodes}
           {edges}
