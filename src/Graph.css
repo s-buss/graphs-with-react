@@ -1,0 +1,15 @@
+.link {
+    stroke: black;
+}
+
+.node rect {
+    fill:green;
+    rx: 5;
+}
+
+.node text {
+    fill: white;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 14px;
+    user-select: none;
+}
