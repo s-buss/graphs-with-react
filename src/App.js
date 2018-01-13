@@ -80,6 +80,8 @@ class Edge extends React.PureComponent {
     ty = ady > 0.1 ? (trg.height / 2) / ady : 1.0;
     var t1 = 1 - Math.min(tx, ty);
 
+    t1 -= 2 / Math.sqrt(dx * dx + dy * dy);
+
     var x0 = src.x + t0 * dx;
     var y0 = src.y + t0 * dy;
     var x1 = src.x + t1 * dx;
@@ -87,30 +89,13 @@ class Edge extends React.PureComponent {
 
     var path = `M ${x0} ${y0} L ${x1} ${y1}`;
 
-    return <path className="link" d={path}/>;
+    return <path className="link" d={path} markerEnd="url(#arrow)"/>;
   }
 }
 
 class Graph extends React.PureComponent {
   constructor(props) {
     super(props);
-
-    var graph = {
-      nodes: [
-        { name: "A" },
-        { name: "B" },
-        { name: "C" },
-        { name: "D" }
-      ],
-      edges: [
-        { source: 0, target: 1 },
-        { source: 1, target: 2 },
-        { source: 2, target: 0 },
-        { source: 2, target: 3 },
-      ]
-    }
-
-    graph.nodes.forEach(v => { v.width = 100; v.height = 30; });
 
     this._handleTick = this._handleTick.bind(this);
     this._handleStart = this._handleStart.bind(this);
@@ -125,8 +110,8 @@ class Graph extends React.PureComponent {
     this._cola = new Layout();
     this._cola
       .size([ 800, 600 ])
-      .nodes(graph.nodes)
-      .links(graph.edges)
+      .nodes(props.graph.nodes)
+      .links(props.graph.edges)
       .handleDisconnected(false) // handle disconnected repacks the components which would hide any drift 
       .avoidOverlaps(true) // force non-overlap
       //.symmetricDiffLinkLengths(80)
@@ -212,6 +197,11 @@ class Graph extends React.PureComponent {
 
     return (
       <svg width="800" height="600" style={{ userSelect: "none" }}>
+        <defs>
+          <marker className="arrow" id="arrow" markerWidth="9" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" />
+          </marker>
+        </defs>
         <text x={0} y={600}>{this.state.tick}</text>
         <g>
           {nodes}
@@ -222,6 +212,23 @@ class Graph extends React.PureComponent {
   }
 }
 
+var graph = {
+  nodes: [
+    { name: "A" },
+    { name: "B" },
+    { name: "C" },
+    { name: "D" }
+  ],
+  edges: [
+    { source: 0, target: 1 },
+    { source: 1, target: 2 },
+    { source: 2, target: 0 },
+    { source: 2, target: 3 },
+  ]
+}
+
+graph.nodes.forEach(v => { v.width = 100; v.height = 30; });
+
 class App extends Component {
   render() {
     return (
@@ -230,7 +237,7 @@ class App extends Component {
           <img src={logo} className="App-logo" alt="logo" />
           <h1 className="App-title">Welcome to React</h1>
         </header>
-        <Graph/>
+        <Graph graph={graph}/>
         <p className="App-intro">
           To get started, edit <code>src/App.js</code> and save to reload.
         </p>
