@@ -228,7 +228,7 @@ class Graph extends React.PureComponent {
     });
 
     return (
-      <svg width="800" height="600" style={{ userSelect: "none" }}>
+      <svg className="graph" width="800" height="600" style={{ userSelect: "none" }}>
         <defs>
           <marker className="arrow" id="arrow" markerWidth="9" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,6 L9,3 z" />

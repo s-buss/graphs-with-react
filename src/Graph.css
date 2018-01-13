@@ -1,3 +1,11 @@
+.graph {
+    border-style: solid;
+    border-width: 1px;
+    border-color: black;
+    margin: 10px;
+    padding: 10px;
+}
+
 .link {
     stroke: black;
     stroke-width: 1px;
