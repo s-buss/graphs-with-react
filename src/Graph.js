@@ -129,30 +129,31 @@ class Graph extends React.PureComponent {
     // Note that starting the layout process in the constructor is not possible.
     // We do that in componentWillMount.
 
-    // This is an example how nodes can be removed from or added to the graph
-    window.setTimeout(function () {
-      var graph = this.props.graph;
+    if (false) {
+      // This is an example how nodes can be removed from or added to the graph
+      window.setTimeout(function () {
+        var graph = this.props.graph;
 
-      // Modify the node and edge lists
-      graph.nodes.splice(1, 1);
-      graph.edges.splice(0, 2);
+        // Modify the node and edge lists
+        graph.nodes.splice(1, 1);
+        graph.edges.splice(0, 2);
 
-      // Start the layout process again
-      this._cola.start();
-    }.bind(this), 3000);
+        // Start the layout process again
+        this._cola.start();
+      }.bind(this), 3000);
 
-    window.setTimeout(function () {
-      var graph = this.props.graph;
+      window.setTimeout(function () {
+        var graph = this.props.graph;
 
-      // Modify the node and edge list
-      var newNode = { id: 5, name: "A new node", width: 100, height: 30 };
-      graph.nodes.push(newNode);
-      graph.edges.push({ source: graph.nodes[1], target: newNode });
+        // Modify the node and edge list
+        var newNode = { id: 5, name: "A new node", width: 100, height: 30 };
+        graph.nodes.push(newNode);
+        graph.edges.push({ source: graph.nodes[1], target: newNode });
 
-      // Start the layout process again
-      this._cola.start();
-    }.bind(this), 6000);
-
+        // Start the layout process again
+        this._cola.start();
+      }.bind(this), 6000);
+    }
 
   }
 
