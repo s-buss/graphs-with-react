@@ -12,6 +12,12 @@
     stroke-linecap: cap;
 }
 
+.secondary-link {
+    stroke: lightgray;
+    stroke-width: 1px;
+    stroke-linecap: cap;
+}
+
 .node > rect {
     fill:green;
     rx: 5;

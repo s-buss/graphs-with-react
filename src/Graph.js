@@ -95,8 +95,15 @@ class Edge extends React.PureComponent {
 
     var path = `M ${x0} ${y0} L ${x1} ${y1}`;
 
-    return <path className="link" d={path} markerEnd="url(#arrow)"/>;
+    var cls = this.props.secondary ? "secondary-link" : "link";
+    var mrk = this.props.secondary ? "secondary-arrow" : "arrow";
+
+    return <path className={cls} d={path} markerEnd={`url(#${mrk})`}/>;
   }
+}
+
+function isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
 class Graph extends React.PureComponent {
@@ -112,6 +119,22 @@ class Graph extends React.PureComponent {
     this._handleMouseUp = this._handleMouseUp.bind(this);
 
     this.state = { started: false, tick: 0 };
+
+    if (props.graph.secondary_edges) {
+      props.graph.secondary_edges.forEach(edge => {
+
+        console.log(JSON.stringify(edge));
+
+        if (isNumber(edge.source)) {
+          edge.source = props.graph.nodes[edge.source];
+        }
+        if (isNumber(edge.target)) {
+          edge.target = props.graph.nodes[edge.target];
+        }
+
+        console.log(JSON.stringify(edge));
+      });
+    }
 
     this._cola = new Layout();
     this._cola
@@ -228,10 +251,25 @@ class Graph extends React.PureComponent {
 
     });
 
+    var secondaryEdges = undefined;
+    var graph = this.props.graph;
+    if (graph.secondary_edges) {
+      secondaryEdges = graph.secondary_edges.map( e => {
+
+        var help = e.source.x + "," + e.source.y + "-" + e.target.x + "," + e.target.y;
+  
+        return <Edge key={e.source.index + "-" + e.target.index} id={help} source={e.source} target={e.target} secondary/>
+  
+      });
+    }
+
     return (
       <svg className="graph" width="800" height="600" style={{ userSelect: "none" }}>
         <defs>
           <marker className="arrow" id="arrow" markerWidth="9" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" />
+          </marker>
+          <marker className="secondary-arrow" id="secondary-arrow" markerWidth="9" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth" fill="lightgray">
             <path d="M0,0 L0,6 L9,3 z" />
           </marker>
         </defs>
@@ -239,6 +277,7 @@ class Graph extends React.PureComponent {
         <g>
           {nodes}
           {edges}
+          {secondaryEdges}
         </g>
       </svg>
     );
