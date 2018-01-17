@@ -106,6 +106,50 @@ function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+class Zoomable extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this._handleWheel = this._handleWheel.bind(this);
+
+    this.state = { scale: 1 };
+  }
+
+  render() {
+
+    var scale = this.state.scale;
+
+    var transform = `matrix(${scale} 0 0 ${scale} 0 0)`;
+
+    return (
+      <svg ref={e => this._svg = e} {...this.props} onWheel={this._handleWheel}>
+        <g transform={transform}>
+          {this.props.children}
+        </g>
+      </svg>
+    );
+  }
+
+  _handleWheel(e) {
+    console.log(`wheel ${e.deltaMode} ${e.deltaX} ${e.deltaY} ${e.deltaZ}`);
+    var delta = -e.deltaY * (e.deltaMode ? 120 : 1) / 500;
+
+    // The new scale factor
+    var scale = Math.max(0.1, Math.min(10, this.state.scale * Math.pow(2, delta)));
+
+    // The current mouse position
+    var p = this._svg.createSVGPoint();
+    p.x = e.clientX;
+    p.y = e.clientY;
+    p = p.matrixTransform(this._svg.getScreenCTM().inverse());
+
+    console.log(`      x=${p.x} y=${p.y}`)
+
+    this.setState({ scale: scale});
+  }
+}
+
 class Graph extends React.PureComponent {
   constructor(props) {
     super(props);
@@ -123,8 +167,6 @@ class Graph extends React.PureComponent {
     if (props.graph.secondary_edges) {
       props.graph.secondary_edges.forEach(edge => {
 
-        console.log(JSON.stringify(edge));
-
         if (isNumber(edge.source)) {
           edge.source = props.graph.nodes[edge.source];
         }
@@ -132,7 +174,6 @@ class Graph extends React.PureComponent {
           edge.target = props.graph.nodes[edge.target];
         }
 
-        console.log(JSON.stringify(edge));
       });
     }
 
@@ -264,7 +305,7 @@ class Graph extends React.PureComponent {
     }
 
     return (
-      <svg className="graph" width="800" height="600" style={{ userSelect: "none" }}>
+      <Zoomable className="graph" width="800" height="600" style={{ userSelect: "none" }}>
         <defs>
           <marker className="arrow" id="arrow" markerWidth="9" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,6 L9,3 z" />
@@ -279,7 +320,7 @@ class Graph extends React.PureComponent {
           {edges}
           {secondaryEdges}
         </g>
-      </svg>
+      </Zoomable>
     );
   }
 }
