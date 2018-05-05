@@ -33,12 +33,14 @@ class Node extends React.PureComponent {
   }
 
   render() {
-    var props = this.props;
-    var node = props.node;
+    var node = this.props.node;
+    
+    var w = node.width;
+    var h = node.height;
 
     return (
       <g className={`node ${node.color}`} transform={`translate(${node.x} ${node.y})`} onMouseDown={this._handleMouseDown} onDragStart={this._handleDragStart}>
-        <rect x={- node.width / 2} y={- node.height / 2} width={node.width} height={node.height}/>
+        <rect x={-w/2} y={-h/2} width={w} height={h}/>
         <text ref={e => this._text = e} x={0} y={0} alignmentBaseline="middle" textAnchor="middle">{node.name}</text>
       </g>
     );
@@ -46,6 +48,9 @@ class Node extends React.PureComponent {
 
   componentDidMount() {
     this.props.node.width = this._text.getBBox().width + 20;
+
+    // Note that setting the node width does not trigger a rerendering of the node
+    // but during the next tick, the node is rendered again.
   }
 
   _handleDragStart() {
@@ -55,6 +60,8 @@ class Node extends React.PureComponent {
   _handleMouseDown(evt) {
 
     if (this.props.onMouseDown) {
+      evt.stopPropagation();
+
       this.props.onMouseDown(this.props.node, evt);
     }
   }
@@ -113,17 +120,55 @@ class Zoomable extends React.Component {
 
     this._handleWheel = this._handleWheel.bind(this);
 
-    this.state = { scale: 1 };
-  }
+    this._handleMouseDown = this._handleMouseDown.bind(this);
+    this._handleMouseMove = this._handleMouseMove.bind(this);
+    this._handleMouseUp = this._handleMouseUp.bind(this);
+    
+    this.state = { scale: 1, tx: 0, ty: 0 };
+    }
+
+    _handleMouseDown(e)
+    {
+      this._mouseDownPos = { x: e.clientX, y: e.clientY, tx: this.state.tx, ty: this.state.ty };
+  
+      window.addEventListener("mousemove", this._handleMouseMove);
+      window.addEventListener("mouseup", this._handleMouseUp);
+    }
+  
+    _handleMouseMove(e) {
+      var dx = e.clientX - this._mouseDownPos.x;
+      var dy = e.clientY - this._mouseDownPos.y;
+  
+      if (!this._dragging && dx * dx + dy * dy > 4) {
+        this._dragging = true;
+      }
+  
+      if (this._dragging) {
+        this.setState({ tx: this._mouseDownPos.tx + dx, ty: this._mouseDownPos.ty + dy });
+      }
+    }
+  
+    _handleMouseUp() {
+      window.removeEventListener("mousemove", this._handleMouseMove);
+      window.removeEventListener("mouseup", this._handleMouseUp);
+  
+      if (this._dragging) {
+        //console.log("DRAG END " + this._mouseDownNode.name);
+        //WebCola.Layout.dragEnd(this._mouseDownNode);
+        this._dragging = false;
+      }
+    }
 
   render() {
 
     var scale = this.state.scale;
-
-    var transform = `matrix(${scale} 0 0 ${scale} 0 0)`;
+    var tx = this.state.tx;
+    var ty = this.state.ty;
+    
+    var transform = `matrix(${scale} 0 0 ${scale} ${tx} ${ty})`;
 
     return (
-      <svg ref={e => this._svg = e} {...this.props} onWheel={this._handleWheel}>
+      <svg ref={e => this._svg = e} {...this.props} onWheel={this._handleWheel} onMouseDown={this._handleMouseDown}>
         <g transform={transform}>
           {this.props.children}
         </g>
@@ -144,9 +189,13 @@ class Zoomable extends React.Component {
     p.y = e.clientY;
     p = p.matrixTransform(this._svg.getScreenCTM().inverse());
 
-    console.log(`      x=${p.x} y=${p.y}`)
+    // Adjust the translation so that the point under the current mouse position stays under the mouse
+    var tx = p.x - (scale / this.state.scale) * (p.x - this.state.tx);
+    var ty = p.y - (scale / this.state.scale) * (p.y - this.state.ty);
 
-    this.setState({ scale: scale});
+    this.setState({ scale: scale, tx: tx, ty: ty });
+
+    this.props.onScaleChanged(scale);
   }
 }
 
@@ -161,6 +210,9 @@ class Graph extends React.PureComponent {
     this._handleMouseDown = this._handleMouseDown.bind(this);
     this._handleMouseMove = this._handleMouseMove.bind(this);
     this._handleMouseUp = this._handleMouseUp.bind(this);
+
+    this._scale = 1;
+    this._handleScaleChanged = this._handleScaleChanged.bind(this);
 
     this.state = { started: false, tick: 0 };
 
@@ -255,13 +307,11 @@ class Graph extends React.PureComponent {
 
     if (!this._dragging && dx * dx + dy * dy > 4) {
       this._dragging = true;
-      //console.log("DRAG START " + this._mouseDownNode.name);
       WebCola.Layout.dragStart(this._mouseDownNode);
     }
 
     if (this._dragging) {
-      //console.log("DRAG " + this._mouseDownNode.name + " "+ dx + "," + dy);
-      WebCola.Layout.drag(this._mouseDownNode, { x: this._mouseDownPos.nx + dx, y: this._mouseDownPos.ny + dy });
+      WebCola.Layout.drag(this._mouseDownNode, { x: this._mouseDownPos.nx + dx / this._scale, y: this._mouseDownPos.ny + dy / this._scale });
       this._cola.resume();
     }
   }
@@ -275,6 +325,10 @@ class Graph extends React.PureComponent {
       WebCola.Layout.dragEnd(this._mouseDownNode);
       this._dragging = false;
     }
+  }
+
+  _handleScaleChanged(scale) {
+    this._scale = scale;
   }
 
   render() {
@@ -305,7 +359,7 @@ class Graph extends React.PureComponent {
     }
 
     return (
-      <Zoomable className="graph" width="800" height="600" style={{ userSelect: "none" }}>
+      <Zoomable className="graph" width="800" height="600" style={{ userSelect: "none" }} onScaleChanged={this._handleScaleChanged}>
         <defs>
           <marker className="arrow" id="arrow" markerWidth="9" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,6 L9,3 z" />
@@ -316,9 +370,9 @@ class Graph extends React.PureComponent {
         </defs>
         <text x={0} y={600}>{this.state.tick}</text>
         <g>
-          {nodes}
-          {edges}
           {secondaryEdges}
+          {edges}
+          {nodes}
         </g>
       </Zoomable>
     );
