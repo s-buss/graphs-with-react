@@ -113,7 +113,7 @@ function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-class Zoomable extends React.Component {
+class Zoomable extends React.PureComponent {
 
   constructor(props) {
     super(props);
@@ -125,39 +125,39 @@ class Zoomable extends React.Component {
     this._handleMouseUp = this._handleMouseUp.bind(this);
     
     this.state = { scale: 1, tx: 0, ty: 0 };
+  }
+
+  _handleMouseDown(e)
+  {
+    this._mouseDownPos = { x: e.clientX, y: e.clientY, tx: this.state.tx, ty: this.state.ty };
+
+    window.addEventListener("mousemove", this._handleMouseMove);
+    window.addEventListener("mouseup", this._handleMouseUp);
+  }
+
+  _handleMouseMove(e) {
+    var dx = e.clientX - this._mouseDownPos.x;
+    var dy = e.clientY - this._mouseDownPos.y;
+
+    if (!this._dragging && dx * dx + dy * dy > 4) {
+      this._dragging = true;
+      this.setState({ dragging: true });
     }
 
-    _handleMouseDown(e)
-    {
-      this._mouseDownPos = { x: e.clientX, y: e.clientY, tx: this.state.tx, ty: this.state.ty };
-  
-      window.addEventListener("mousemove", this._handleMouseMove);
-      window.addEventListener("mouseup", this._handleMouseUp);
+    if (this._dragging) {
+      this.setState({ tx: this._mouseDownPos.tx + dx, ty: this._mouseDownPos.ty + dy });
     }
-  
-    _handleMouseMove(e) {
-      var dx = e.clientX - this._mouseDownPos.x;
-      var dy = e.clientY - this._mouseDownPos.y;
-  
-      if (!this._dragging && dx * dx + dy * dy > 4) {
-        this._dragging = true;
-      }
-  
-      if (this._dragging) {
-        this.setState({ tx: this._mouseDownPos.tx + dx, ty: this._mouseDownPos.ty + dy });
-      }
+  }
+
+  _handleMouseUp() {
+    window.removeEventListener("mousemove", this._handleMouseMove);
+    window.removeEventListener("mouseup", this._handleMouseUp);
+
+    if (this._dragging) {
+      this._dragging = false;
+      this.setState({ dragging: false });
     }
-  
-    _handleMouseUp() {
-      window.removeEventListener("mousemove", this._handleMouseMove);
-      window.removeEventListener("mouseup", this._handleMouseUp);
-  
-      if (this._dragging) {
-        //console.log("DRAG END " + this._mouseDownNode.name);
-        //WebCola.Layout.dragEnd(this._mouseDownNode);
-        this._dragging = false;
-      }
-    }
+  }
 
   render() {
 
@@ -167,8 +167,14 @@ class Zoomable extends React.Component {
     
     var transform = `matrix(${scale} 0 0 ${scale} ${tx} ${ty})`;
 
+    var { onScaleChanged, style, ...props } = this.props;
+
+    if (this.state.dragging) {
+      style = Object.assign({ cursor: "move" }, style);
+    }
+
     return (
-      <svg ref={e => this._svg = e} {...this.props} onWheel={this._handleWheel} onMouseDown={this._handleMouseDown}>
+      <svg ref={e => this._svg = e} style={style} {...props} onWheel={this._handleWheel} onMouseDown={this._handleMouseDown}>
         <g transform={transform}>
           {this.props.children}
         </g>
