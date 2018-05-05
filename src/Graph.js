@@ -169,7 +169,7 @@ class Zoomable extends React.PureComponent {
 
     var { onScaleChanged, style, ...props } = this.props;
 
-    if (this.state.dragging) {
+    if (this.state.dragging || this.props.dragging) {
       style = Object.assign({ cursor: "move" }, style);
     }
 
@@ -314,6 +314,7 @@ class Graph extends React.PureComponent {
     if (!this._dragging && dx * dx + dy * dy > 4) {
       this._dragging = true;
       WebCola.Layout.dragStart(this._mouseDownNode);
+      this.setState({ dragging: true });
     }
 
     if (this._dragging) {
@@ -327,9 +328,9 @@ class Graph extends React.PureComponent {
     window.removeEventListener("mouseup", this._handleMouseUp);
 
     if (this._dragging) {
-      //console.log("DRAG END " + this._mouseDownNode.name);
       WebCola.Layout.dragEnd(this._mouseDownNode);
       this._dragging = false;
+      this.setState({ dragging: false });
     }
   }
 
@@ -365,7 +366,7 @@ class Graph extends React.PureComponent {
     }
 
     return (
-      <Zoomable className="graph" width="800" height="600" style={{ userSelect: "none" }} onScaleChanged={this._handleScaleChanged}>
+      <Zoomable className="graph" width="800" height="600" style={{ userSelect: "none" }} onScaleChanged={this._handleScaleChanged} dragging={this.state.dragging}>
         <defs>
           <marker className="arrow" id="arrow" markerWidth="9" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
             <path d="M0,0 L0,6 L9,3 z" />
